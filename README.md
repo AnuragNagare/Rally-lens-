@@ -124,15 +124,6 @@ yolo detect train model=yolo11s.pt data=ball.yaml imgsz=1280 epochs=100
 python run.py --video my_match.mp4 --ball-weights runs/detect/train/weights/best.pt
 ```
 
-## Licences and rights
-
-- **Sample video.** `data/input.mp4` is a professional tour broadcast clip taken from a
-  public GitHub repository (`DanielDuongQuoc/PickleballTracking`, file `1_1.mp4`) that
-  carries no licence. It is included for local testing only. Do not publish it or the
-  video rendered from it; record or license your own footage for anything public.
-- **Pose model.** `models/yolo11s-pose.pt` and the `ultralytics` package are AGPL-3.0.
-  Commercial products need an Ultralytics enterprise licence or a different pose model.
-- **Font.** Inter, SIL Open Font License 1.1 (`assets/fonts/`).
 
 ## Layout
 
@@ -151,3 +142,11 @@ tools/
 data/                        sample clip and its hit labels
 output/                      results from the sample clip
 ```
+
+
+
+
+
+https://github.com/user-attachments/assets/fa4e4788-9108-492b-a08a-ae9dad904d01
+
+
