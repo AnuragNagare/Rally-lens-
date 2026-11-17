@@ -1,0 +1,50 @@
+{
+  "video": "data/input.mp4",
+  "fps": 30.0,
+  "frames": 606,
+  "duration_s": 20.2,
+  "court_line_fit": 0.997,
+  "rallies": [
+    {
+      "rally": 1,
+      "start_s": 0.0,
+      "end_s": 7.67,
+      "shots": 7
+    },
+    {
+      "rally": 2,
+      "start_s": 10.87,
+      "end_s": 20.17,
+      "shots": 9
+    }
+  ],
+  "shots_total": 16,
+  "avg_shot_speed_kmh": 41.4,
+  "fastest_shot_kmh": 85.3,
+  "ball": {
+    "frames_detected": 347,
+    "frames_interpolated": 164,
+    "frames_missing": 95
+  },
+  "players": {
+    "near": {
+      "name": "Near player",
+      "frames_tracked": 483,
+      "distance_m": 38.4,
+      "top_speed_kmh": 22.6,
+      "avg_speed_kmh": 8.4,
+      "shots": 8,
+      "time_at_kitchen_line_s": 8.6
+    },
+    "far": {
+      "name": "Far player",
+      "frames_tracked": 605,
+      "distance_m": 39.3,
+      "top_speed_kmh": 18.7,
+      "avg_speed_kmh": 6.9,
+      "shots": 8,
+      "time_at_kitchen_line_s": 4.6
+    }
+  },
+  "notes": "Shot speed is the average over the flight (hitter position to receiver position, divided by time between hits). It is an estimate, lower than a radar reading."
+}

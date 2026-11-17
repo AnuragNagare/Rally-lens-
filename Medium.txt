@@ -1,0 +1,144 @@
+I Turned a Single Pickleball Video Into Match Analytics. No Sensors, No Second Camera.
+
+What it takes to get shot counts, ball speed and player movement out of ordinary footage
+
+Professional sports analytics usually means hardware: multiple calibrated cameras, radar, sometimes sensors on the players. That is fine for a tour event. It is out of reach for a local club, a coach or a small sports tech startup.
+
+So I asked a simpler question. How much can you get from one fixed camera behind the baseline, the kind of footage clubs already record?
+
+The answer turned out to be: quite a lot. From a 20-second singles clip, my pipeline produced a shot count, an average speed for every shot, distance covered by each player, their running speed, time spent at the kitchen line, a top-down court map and movement heatmaps.
+
+Here is how it works, and where it struggles.
+
+Why pickleball
+
+Most computer vision demos in racket sports use tennis. Pickleball is growing fast, has far fewer polished analytics tools, and suits a single camera well. The court is small, so the whole thing fits in frame. The ball is slower and larger than a tennis ball. And the sport has its own tactical questions, such as who controls the kitchen line, that generic tools do not answer.
+
+Step 1: Teach the computer where the court is
+
+A camera sees pixels. Analytics needs metres. The bridge between the two is a homography, a mathematical mapping from the tilted view in the video to a flat, top-down court.
+
+To build it, the system first averages dozens of frames so the players and ball disappear and only the empty court remains. It then finds the white lines, picks out the two baselines and two sidelines, and locates the four corners where they meet. Since a pickleball court has known dimensions, those four corners are enough to convert any point on the ground from pixels into real-world position.
+
+To check it, I projected every court line back onto the video. They landed on the painted lines 99.7% of the time.
+
+Step 2: Find the players
+
+For the players I used a pose estimation model, which detects 17 body keypoints per person. The point where the feet touch the ground gets mapped through the homography, giving each player’s position on the court in every frame.
+
+Two problems showed up immediately. The far player is tiny, only about 100 pixels tall, and the model missed them in a quarter of the frames. Running a second, zoomed-in pass on the far half of the court fixed that. The other problem was a line judge standing near the net, who kept being mistaken for a player. The fix was simple: anyone who never moves during the clip is not a player.
+
+Once positions are smoothed, distance and speed fall out naturally.
+
+Step 3: Track the ball, the hard part
+
+The ball is the hardest object in the scene. On the far side it is five pixels wide. It blurs when hit hard and disappears behind players and the net.
+
+I started with the obvious idea: look for small, bright, yellowish blobs that are not part of the empty-court background. The first version found about five candidates per frame, and most were wrong. A cap, a shoe trim and a face all looked enough like a ball to fool it. The tracker happily followed a player’s head around the court.
+
+I spent a long time adding rules to reject body parts. What actually worked was much simpler: a stricter definition of the ball’s colour. Optic yellow has a specific signature that white clothing, skin and court edges do not share. That one change cut false candidates from five per frame to under one, and the trajectory became clean.
+
+A second surprise came from the video itself. Broadcast footage often contains duplicated frames, where the ball appears to stop mid-air for an instant. That broke the motion prediction until the tracker learned to estimate velocity over several frames, not just the last two.
+
+The final tracker links detections into short paths and then picks the best physically possible chain, bridging short gaps where the ball is hidden. It knew the ball’s position in 511 of 606 frames.
+
+Step 4: Count the shots
+
+How do you know when a player hits the ball? My first attempt looked for sudden changes in direction. It failed, because bounces change direction too, and far-side movement is too small in pixels to measure reliably.
+
+The better idea was to stop thinking about the ball alone. During a rally the ball shuttles between two players. If you measure how close it is to each of them, that value swings back and forth like a pendulum, and every turning point is a hit. Bounces barely register, so they need no special handling.
+
+Checked against my own frame-by-frame labels, this found all 16 shots in the clip with no false detections, and placed each within about a tenth of a second.
+
+Step 5: Be honest about ball speed
+
+This is where many demos mislead. The homography only works for points on the ground, and a ball in flight is not on the ground. Projecting it directly gives numbers that look precise and are wrong.
+
+So I measure something defensible instead: the distance between the hitter and the receiver, divided by the time between the two hits. That is an average speed across the whole flight, including the slowdown after a bounce. It reads lower than a radar gun would, and the video labels it as an average. In this clip the average shot was about 41 km/h and the fastest about 85 km/h.
+
+What it cannot do yet
+
+It needs a fixed camera, so panning broadcast shots will not work. It handles singles only. The ball detection depends on a yellow ball and stable lighting; a trained detection model would be the next upgrade for varied conditions. And my accuracy figures come from one clip that I also used for tuning, so they show the approach works, not how well it generalises.
+
+What I took away
+
+The biggest wins were not clever algorithms. They were looking closely at the failures, and finding that a cleaner signal beats a smarter tracker. Most of the value in a project like this sits in the unglamorous details.
+
+If you run a club, a coaching platform or a sports product and have match footage sitting unused, there is probably more insight in it than you think.
+
+Two things to do before publishing:
+
+Images: add a screenshot or short clip of the dashboard near the top, and one of the top-down court view under Step 1. Use your own footage for these, since the sample clip is not cleared for publishing.
+Ending: add your contact line or a link to the LinkedIn post after the last paragraph.
+
+Here is a fresh take. This one is story-led and written for a general reader, with less step-by-step structure and almost no jargon. It is about 1,000 words.
+
+What a Single Camera Can Tell You About a Pickleball Match
+
+I built a system that watches ordinary match footage and turns it into stats. Here is what worked, what broke, and what surprised me.
+
+For the first three days, my ball tracker followed a man’s hat.
+
+I had built a system to analyse pickleball footage, and its job was simple: find the ball in each frame. It found something small, bright and roughly the right colour, locked on with total confidence, and followed it faithfully around the court. It was the far player’s cap.
+
+That hat taught me more about computer vision than any tutorial. But first, the idea.
+
+The question
+
+Sports analytics at the top level runs on expensive hardware. Stadiums have rings of calibrated cameras, radar guns and dedicated operators. A local club has a phone on a tripod behind the baseline.
+
+I wanted to know how far that tripod footage could go. Could one fixed camera, with no sensors and no second angle, tell you who hit how many shots, how fast the ball travelled, how far each player ran and where they spent their time?
+
+I chose pickleball because it suits the problem. The court is small enough to fit in one frame, the ball is slower than a tennis ball, and the sport is growing quickly with few tools built for it.
+
+Giving the computer a sense of space
+
+A video is flat. A court seen from behind the baseline looks like a trapezoid, with the far end squeezed into a few rows of pixels. A step by the far player moves them five pixels; the same step by the near player moves them fifty.
+
+The fix is to find the four corners of the court. Since every pickleball court has the same dimensions, those corners let you convert any spot on the ground into a real position in metres, as if you were looking straight down from above.
+
+To find the corners, the system blends many frames together until the players fade away and only the empty court remains. Then it looks for the white lines. When I drew the calculated court back over the video, it matched the painted lines almost perfectly.
+
+Finding the people
+
+A pose estimation model handled the players. It marks the joints of the body, such as shoulders, elbows, knees and ankles, and I used the feet to place each player on the court.
+
+It was not smooth. The far player was so small that the model missed them a quarter of the time, until I gave it a second, zoomed-in look at the far end. Then a line judge standing by the net kept getting counted as a player. The solution made me laugh: ignore anyone who never moves.
+
+Back to the hat
+
+The ball was always going to be the hard part. On the far side it is about five pixels wide. It blurs when struck hard and vanishes behind bodies and the net.
+
+My first detector looked for small bright yellowish things that were not part of the empty court. It found about five per frame. One was the ball. The others were a cap, a shoe trim, a face and the occasional spectator.
+
+I responded the way most engineers would, by adding rules. Ignore things near a head. Ignore things near feet. Ignore things that move with a body. Each rule fixed one problem and created another, and at one point the system was ignoring the ball whenever it came near a player, which is exactly when it matters.
+
+The real fix took one line of thinking. I looked closely at the actual colour of the ball and found that optic yellow has a signature nothing else on the court shares. White clothing does not have it. Skin does not have it. Tightening the colour definition dropped the false alarms from five per frame to fewer than one. The hat disappeared, and a clean arc of ball positions appeared in its place.
+
+I had spent days building a smarter tracker when what I needed was a cleaner signal.
+
+How do you know a shot happened?
+
+With the ball tracked, I needed to count hits. My first instinct was to look for sudden changes in direction. That failed, because a bounce changes direction too.
+
+The idea that worked was to stop watching the ball alone. In a rally the ball travels back and forth between two people. Measure how close it is to each of them over time and you get a wave, swinging toward one player and then the other. Every peak of that wave is a hit. Bounces hardly disturb it.
+
+I checked the result against my own frame-by-frame count. The clip had 16 shots across two rallies. The system found all 16, with none invented.
+
+The speed number I refused to fake
+
+Ball speed is the stat everyone wants and the easiest one to get wrong. The trick that converts pixels to metres only works for things on the ground, and a ball in flight is not on the ground. Push it through anyway and you get a confident, precise, wrong number.
+
+So I measured what I could defend: the distance from the player who hit the ball to the player who received it, divided by the time between the two hits. That gives an average speed for the whole flight. It is lower than a radar reading, and the video says so. In my clip the typical shot averaged about 41 km/h.
+
+What it produced
+
+From 20 seconds of footage, the system produced a shot-by-shot log, the distance each player covered (about 38 metres each), their top speeds, how long each spent at the kitchen line, a top-down map of the rally and a heatmap of where each player stood.
+
+It has clear limits. The camera must stay still, it handles singles only, and it expects a yellow ball in steady light. I also tuned it on the same clip I tested it on, so the perfect shot count shows the method works, not that it works everywhere.
+
+What stayed with me
+
+I expected the hard part to be the mathematics. It was the looking: stepping through frames, seeing what the system thought it saw, and working out why. Every real improvement came from that, and none from adding complexity.
+
+There is a lot of match footage sitting on phones and hard drives. Most of it has never been looked at twice.

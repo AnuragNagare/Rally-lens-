@@ -1,0 +1,9 @@
+{
+  "video": "data/input.mp4",
+  "note": "Hand-labelled paddle contacts (frame index, player). Read off the footage frame by frame; treat as accurate to about +/- 4 frames. Frame 0 is a shot already in flight when the clip starts. The ball knocked back to the server at ~frame 326 is deliberately not labelled: it is not a rally shot.",
+  "hits": [
+    [0, "far"], [33, "near"], [46, "far"], [93, "near"], [127, "far"], [164, "near"], [181, "far"],
+    [351, "near"], [388, "far"], [409, "near"], [448, "far"], [467, "near"], [504, "far"],
+    [524, "near"], [556, "far"], [586, "near"]
+  ]
+}
